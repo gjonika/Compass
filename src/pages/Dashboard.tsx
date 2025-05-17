@@ -31,7 +31,7 @@ const Dashboard = () => {
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  
+
   // Extract unique tags from all projects
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -42,93 +42,97 @@ const Dashboard = () => {
     });
     return Array.from(tagSet);
   }, [projects]);
-  
+
   // Load initial data
   useEffect(() => {
-    // Check if projects are stored in localStorage
-    const storedProjects = localStorage.getItem('dashboard_projects');
-    if (storedProjects) {
-      try {
-        setProjects(JSON.parse(storedProjects));
-      } catch (error) {
-        console.error('Failed to parse stored projects:', error);
+    if (typeof window !== 'undefined') {
+      const storedProjects = localStorage.getItem('dashboard_projects');
+      if (storedProjects) {
+        try {
+          setProjects(JSON.parse(storedProjects));
+        } catch (error) {
+          console.error('Failed to parse stored projects:', error);
+          setProjects(projectsData);
+        }
+      } else {
         setProjects(projectsData);
       }
     } else {
       setProjects(projectsData);
     }
   }, []);
-  
+
+
   // Save projects to localStorage whenever they change
   useEffect(() => {
     if (projects.length > 0) {
       localStorage.setItem('dashboard_projects', JSON.stringify(projects));
     }
   }, [projects]);
-  
+
   // Apply filters
   useEffect(() => {
     let result = [...projects];
-    
+
     // Apply search filter
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      result = result.filter(project => 
-        project.name.toLowerCase().includes(searchLower) || 
+      result = result.filter(project =>
+        project.name.toLowerCase().includes(searchLower) ||
         (project.summary?.toLowerCase().includes(searchLower)) ||
         project.description.toLowerCase().includes(searchLower)
       );
     }
-    
+
     // Apply status filter
     if (filters.status !== 'all') {
       result = result.filter(project => project.status === filters.status);
     }
-    
+
     // Apply type filter
     if (filters.type !== 'all') {
       result = result.filter(project => project.type === filters.type);
     }
-    
+
     // Apply usefulness filter
     if (filters.usefulness !== 'all') {
       // Convert string usefulness to number for comparison
       const usefulnessValue = parseInt(filters.usefulness.toString());
       result = result.filter(project => project.usefulness === usefulnessValue);
     }
-    
+
     // Apply monetized filter
     if (filters.showMonetizedOnly) {
       result = result.filter(project => project.isMonetized);
     }
-    
+
     // Apply tag filters
     if (selectedTags.length > 0) {
-      result = result.filter(project => 
+      result = result.filter(project =>
         project.tags && selectedTags.every(tag => project.tags?.includes(tag))
       );
     }
-    
+
     setFilteredProjects(result);
   }, [projects, filters, selectedTags]);
-  
+
   const handleFilterChange = (newFilters: FilterOptions) => {
     setFilters(newFilters);
   };
-  
+
   const handleUpdateProject = (updatedProject: Project) => {
-    const updatedProjects = projects.map(p => 
+    const updatedProjects = projects.map(p =>
       p.id === updatedProject.id ? updatedProject : p
     );
     setProjects(updatedProjects);
   };
-  
+
   const handleDeleteProject = (projectId: string) => {
     const updatedProjects = projects.filter(p => p.id !== projectId);
     setProjects(updatedProjects);
     toast.success("Project deleted successfully");
   };
-  
+
   const handleAddProject = (newProject: Project) => {
     setProjects([...projects, newProject]);
     toast.success("Project added successfully");
@@ -136,7 +140,7 @@ const Dashboard = () => {
 
   const handleSort = (sortBy: string) => {
     const sorted = [...projects];
-    
+
     switch (sortBy) {
       case 'name':
         sorted.sort((a, b) => a.name.localeCompare(b.name));
@@ -156,7 +160,7 @@ const Dashboard = () => {
       default:
         break;
     }
-    
+
     setProjects(sorted);
     toast.info(`Sorted projects by ${sortBy}`);
   };
@@ -171,7 +175,7 @@ const Dashboard = () => {
       ...project,
       id: project.id || crypto.randomUUID()
     }));
-    
+
     setProjects([...projects, ...projectsWithNewIds]);
     toast.success(`Imported ${projectsWithNewIds.length} projects`);
   };
@@ -192,9 +196,9 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setShowInsights(!showInsights)}
               className="transition-colors"
             >
@@ -207,10 +211,10 @@ const Dashboard = () => {
             <ExportButton projects={filteredProjects} />
           </div>
         </div>
-        
+
         <AnimatePresence>
           {showInsights && (
-            <motion.div 
+            <motion.div
               className="mb-8"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
@@ -221,16 +225,16 @@ const Dashboard = () => {
             </motion.div>
           )}
         </AnimatePresence>
-        
+
         <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <Filters 
+          <Filters
             filters={filters}
             onFilterChange={handleFilterChange}
             onAddProject={handleAddProject}
           />
-          
+
           <div className="flex flex-wrap gap-2">
-            <Button 
+            <Button
               onClick={() => handleSort('name')}
               variant="outline"
               size="sm"
@@ -238,7 +242,7 @@ const Dashboard = () => {
             >
               Sort by Name
             </Button>
-            <Button 
+            <Button
               onClick={() => handleSort('status')}
               variant="outline"
               size="sm"
@@ -246,7 +250,7 @@ const Dashboard = () => {
             >
               Sort by Status
             </Button>
-            <Button 
+            <Button
               onClick={() => handleSort('usefulness')}
               variant="outline"
               size="sm"
@@ -254,7 +258,7 @@ const Dashboard = () => {
             >
               Sort by Usefulness
             </Button>
-            <Button 
+            <Button
               onClick={() => handleSort('progress')}
               variant="outline"
               size="sm"
@@ -264,19 +268,19 @@ const Dashboard = () => {
             </Button>
           </div>
         </div>
-        
+
         {/* Tag filter section */}
         <div className="mb-4">
-          <TagFilter 
-            allTags={allTags} 
-            selectedTags={selectedTags} 
-            onTagsChange={setSelectedTags} 
+          <TagFilter
+            allTags={allTags}
+            selectedTags={selectedTags}
+            onTagsChange={setSelectedTags}
           />
         </div>
-        
+
         <AnimatePresence mode="wait">
           {filteredProjects.length === 0 ? (
-            <motion.div 
+            <motion.div
               className="text-center py-20"
               key="empty"
               initial={{ opacity: 0 }}
@@ -287,7 +291,7 @@ const Dashboard = () => {
               <p className="text-gray-500 mt-2">Try adjusting your filters or add a new project</p>
             </motion.div>
           ) : view === 'card' ? (
-            <motion.div 
+            <motion.div
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
               key="card-view"
               initial={{ opacity: 0 }}
@@ -296,7 +300,7 @@ const Dashboard = () => {
               transition={{ duration: 0.3 }}
             >
               {filteredProjects.map((project) => (
-                <ProjectCard 
+                <ProjectCard
                   key={project.id}
                   project={project}
                   onUpdateProject={handleUpdateProject}
@@ -312,8 +316,8 @@ const Dashboard = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <TableView 
-                projects={filteredProjects} 
+              <TableView
+                projects={filteredProjects}
                 onUpdateProject={handleUpdateProject}
                 onEdit={handleTableEdit}
                 onDeleteProject={handleDeleteProject}
@@ -321,8 +325,8 @@ const Dashboard = () => {
             </motion.div>
           )}
         </AnimatePresence>
-        
-        <motion.div 
+
+        <motion.div
           className="mt-8 text-center text-gray-500 text-sm"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -331,7 +335,7 @@ const Dashboard = () => {
           Showing {filteredProjects.length} of {projects.length} projects
         </motion.div>
       </div>
-      
+
       {/* Project Edit Dialog for Table View */}
       {editProject && (
         <Dialog open={!!editProject} onOpenChange={(open) => !open && setEditProject(null)}>
@@ -341,8 +345,8 @@ const Dashboard = () => {
               <DialogDescription>Make changes to your project details below.</DialogDescription>
             </DialogHeader>
             <div className="py-4">
-              <ProjectCard 
-                project={editProject} 
+              <ProjectCard
+                project={editProject}
                 onUpdateProject={(updated) => {
                   handleUpdateProject(updated);
                   setEditProject(null);
@@ -359,9 +363,9 @@ const Dashboard = () => {
           </DialogContent>
         </Dialog>
       )}
-      
+
       {/* Import Modal */}
-      <ImportModal 
+      <ImportModal
         open={showImportModal}
         onOpenChange={setShowImportModal}
         onImport={handleImportProjects}
